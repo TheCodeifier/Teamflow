@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Database {
-    private static final String DB_URL = "jdbc:sqlite:teamflow.sqlite";
+    private static final String DB_URL = "jdbc:sqlite:database/db.sqlite";
 
     // Connect to the database
     public static Connection connect() {
