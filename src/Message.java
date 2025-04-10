@@ -1,5 +1,7 @@
 import java.time.LocalDateTime;
 
+import java.time.LocalDateTime;
+
 public class Message {
     private int id;
     private String content;
@@ -8,21 +10,23 @@ public class Message {
     private String trelloUrl;
     private int sprintNumber;
 
-    public Message(String content, User sender, LocalDateTime timestamp, String trelloUrl, int sprintnummer) {
+    public Message(String content, User sender, String trelloUrl, int sprintNumber) {
         this.content = content;
         this.sender = sender;
         this.timestamp = LocalDateTime.now();
         this.trelloUrl = trelloUrl;
-        this.sprintNumber = sprintnummer;
+        this.sprintNumber = sprintNumber;
     }
 
-    public Message(int id, String content, User sender, LocalDateTime timestamp, String trelloUrl, int sprintnummer) {
+    // Constructor with ID for database retrieval
+    public Message(int id, String content, User sender, LocalDateTime timestamp,
+                   String trelloUrl, int sprintNumber) {
         this.id = id;
         this.content = content;
         this.sender = sender;
         this.timestamp = timestamp;
         this.trelloUrl = trelloUrl;
-        this.sprintNumber = sprintnummer;
+        this.sprintNumber = sprintNumber;
     }
 
     public int getId() {
@@ -47,6 +51,10 @@ public class Message {
 
     public int getSprintNumber() {
         return sprintNumber;
+    }
 
+    public String getFormattedMetadata() {
+        return String.format("[%s] by %s at %s (Sprint %d)",
+                id, sender.getUsername(), timestamp.toString(), sprintNumber);
     }
 }
