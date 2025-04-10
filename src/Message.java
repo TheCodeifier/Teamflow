@@ -6,46 +6,47 @@ public class Message {
     private User sender;
     private LocalDateTime timestamp;
     private String trelloUrl;
-    private int sprintnummer;
+    private int sprintNumber;
 
-    public Message (String content, User sender, LocalDateTime timestamp, String trelloUrl, int sprintnummer){
+    public Message(String content, User sender, LocalDateTime timestamp, String trelloUrl, int sprintnummer) {
         this.content = content;
         this.sender = sender;
         this.timestamp = LocalDateTime.now();
         this.trelloUrl = trelloUrl;
-        this.sprintnummer = sprintnummer;
+        this.sprintNumber = sprintnummer;
     }
 
-    public Message (int id, String content, User sender, LocalDateTime timestamp, String trelloUrl, int sprintnummer){
+    public Message(int id, String content, User sender, LocalDateTime timestamp, String trelloUrl, int sprintnummer) {
         this.id = id;
         this.content = content;
         this.sender = sender;
         this.timestamp = timestamp;
         this.trelloUrl = trelloUrl;
-        this.sprintnummer = sprintnummer;
+        this.sprintNumber = sprintnummer;
     }
 
-    public int getId(){
+    public int getId() {
         return id;
     }
 
-    public String getContent(){
+    public String getContent() {
         return content;
     }
 
-    public User getSender(){
+    public User getSender() {
         return sender;
     }
 
-    public LocalDateTime getTimestamp(){
+    public LocalDateTime getTimestamp() {
         return timestamp;
     }
 
-    public String getTrelloUrl(){
+    public String getTrelloUrl() {
         return trelloUrl;
     }
 
-    public int getSprintnummer(){
-        return sprintnummer;
+    public int getSprintNumber() {
+        return sprintNumber;
+
     }
 }
