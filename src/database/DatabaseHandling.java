@@ -1,10 +1,8 @@
-import java.sql.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+package database;
 
-public class Database {
+import java.sql.*;
+
+public class DatabaseHandling {
     private static final String DB_URL = "jdbc:sqlite:database/db.sqlite";
 
     // Connect to the database
