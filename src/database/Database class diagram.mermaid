@@ -1,0 +1,114 @@
+classDiagram
+    class Database {
+        -String DB_URL
+        -static Database instance
+        -Connection connection
+        -Database()
+        +static synchronized Database getInstance()
+        +Connection getConnection()
+        +void closeConnection()
+    }
+
+    class Gebruiker {
+        -String gebruikersnaam
+        -String weergavenaam
+        +Gebruiker(String gebruikersnaam, String weergavenaam)
+        +static boolean exists(String gebruikersnaam)
+        +static Gebruiker lookup(String gebruikersnaam)
+        +static List~Gebruiker~ getAll()
+        +void save()
+        +boolean delete()
+        +String getGebruikersnaam()
+        +void setGebruikersnaam(String gebruikersnaam)
+        +String getWeergavenaam()
+        +void setWeergavenaam(String weergavenaam)
+    }
+
+    class Bericht {
+        -int berichtID
+        -String inhoud
+        -LocalDateTime tijdstip
+        -String afzender
+        -int sprintNummer
+        +Bericht(int berichtID, String inhoud, LocalDateTime tijdstip, String afzender, int sprintNummer)
+        +static boolean exists(int berichtID)
+        +static Bericht lookup(int berichtID)
+        +static List~Bericht~ getAll()
+        +static List~Bericht~ getByAfzender(String afzender)
+        +static List~Bericht~ getBySprint(int sprintNummer)
+        +int save()
+        +boolean delete()
+        +int getBerichtID()
+        +void setBerichtID(int berichtID)
+        +String getInhoud()
+        +void setInhoud(String inhoud)
+        +LocalDateTime getTijdstip()
+        +void setTijdstip(LocalDateTime tijdstip)
+        +String getAfzender()
+        +void setAfzender(String afzender)
+        +int getSprintNummer()
+        +void setSprintNummer(int sprintNummer)
+    }
+
+    class Sprint {
+        -int sprintNummer
+        -LocalDate beginDatum
+        -LocalDate eindDatum
+        +Sprint(int sprintNummer, LocalDate beginDatum, LocalDate eindDatum)
+        +static boolean exists(int sprintNummer)
+        +static Sprint lookup(int sprintNummer)
+        +static List~Sprint~ getAll()
+        +void save()
+        +boolean delete()
+        +int getSprintNummer()
+        +void setSprintNummer(int sprintNummer)
+        +LocalDate getBeginDatum()
+        +void setBeginDatum(LocalDate beginDatum)
+        +LocalDate getEindDatum()
+        +void setEindDatum(LocalDate eindDatum)
+    }
+
+    class Taak {
+        -int berichtID
+        -int trelloID
+        -String beschrijving
+        +Taak(int berichtID, int trelloID, String beschrijving)
+        +static boolean exists(int berichtID)
+        +static Taak lookup(int berichtID)
+        +static List~Taak~ getAll()
+        +static List~Taak~ getByTrelloID(int trelloID)
+        +void save()
+        +boolean delete()
+        +int getBerichtID()
+        +void setBerichtID(int berichtID)
+        +int getTrelloID()
+        +void setTrelloID(int trelloID)
+        +String getBeschrijving()
+        +void setBeschrijving(String beschrijving)
+    }
+
+    class Trello {
+        -int trelloID
+        -String trelloURL
+        +Trello(int trelloID, String trelloURL)
+        +static boolean exists(int trelloID)
+        +static Trello lookup(int trelloID)
+        +static List~Trello~ getAll()
+        +void save()
+        +boolean delete()
+        +int getTrelloID()
+        +void setTrelloID(int trelloID)
+        +String getTrelloURL()
+        +void setTrelloURL(String trelloURL)
+    }
+
+    %% Relationships
+    Bericht "1" -- "0..1" Taak : has
+    Taak "0..*" -- "1" Trello : references
+    Bericht "0..*" -- "1" Sprint : belongs to
+    Bericht "0..*" -- "1" Gebruiker : sent by
+    Database "1" -- "*" Bericht : manages
+    Database "1" -- "*" Gebruiker : manages
+    Database "1" -- "*" Sprint : manages
+    Database "1" -- "*" Taak : manages
+    Database "1" -- "*" Trello : manages
