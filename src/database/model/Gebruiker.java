@@ -1,4 +1,4 @@
-package databasemodel;
+package database.model;
 
 import database.Database;
 
@@ -8,6 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a user in the system with username and display name.
@@ -116,6 +118,57 @@ class Gebruiker {
             System.out.println("Error retrieving user: " + e.getMessage());
             e.printStackTrace();
             return null;
+        } finally {
+            // Close resources
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+                // Don't close connection here as it's managed by the Database singleton
+            } catch (SQLException e) {
+                System.out.println("Error closing resources: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Retrieves all users from the database.
+     *
+     * @return List of all Gebruiker objects in the database, empty list if none found or if an error occurs
+     */
+    public static List<Gebruiker> getAll() {
+        List<Gebruiker> gebruikers = new ArrayList<>();
+
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            // Get database connection from singleton
+            conn = Database.getInstance().getConnection();
+
+            // Prepare SQL query to select all users
+            String sql = "SELECT gebruikersnaam, weergavenaam FROM GEBRUIKER";
+            stmt = conn.prepareStatement(sql);
+
+            // Execute query
+            rs = stmt.executeQuery();
+
+            // Process result set and build list of gebruikers
+            while (rs.next()) {
+                String username = rs.getString("gebruikersnaam");
+                String displayName = rs.getString("weergavenaam");
+
+                Gebruiker gebruiker = new Gebruiker(username, displayName);
+                gebruikers.add(gebruiker);
+            }
+
+            return gebruikers;
+
+        } catch (SQLException e) {
+            System.out.println("Error retrieving all users: " + e.getMessage());
+            e.printStackTrace();
+            return gebruikers; // Return empty list in case of error
         } finally {
             // Close resources
             try {
@@ -259,159 +312,5 @@ class Gebruiker {
 
     public void setWeergavenaam(String weergavenaam) {
         this.weergavenaam = weergavenaam;
-    }
-}
-
-class Sprint {
-    private int sprintNummer;
-    private LocalDate beginDatum;
-    private LocalDate eindDatum;
-
-    public Sprint(int sprintNummer, LocalDate beginDatum, LocalDate eindDatum) {
-        this.sprintNummer = sprintNummer;
-        this.beginDatum = beginDatum;
-        this.eindDatum = eindDatum;
-    }
-
-    public int getSprintNummer() {
-        return sprintNummer;
-    }
-
-    public void setSprintNummer(int sprintNummer) {
-        this.sprintNummer = sprintNummer;
-    }
-
-    public LocalDate getBeginDatum() {
-        return beginDatum;
-    }
-
-    public void setBeginDatum(LocalDate beginDatum) {
-        this.beginDatum = beginDatum;
-    }
-
-    public LocalDate getEindDatum() {
-        return eindDatum;
-    }
-
-    public void setEindDatum(LocalDate eindDatum) {
-        this.eindDatum = eindDatum;
-    }
-}
-
-class Bericht {
-    private int berichtID;
-    private String inhoud;
-    private LocalDateTime tijdstip;
-    private String afzender;
-    private int sprintNummer;
-
-    public Bericht(int berichtID, String inhoud, LocalDateTime tijdstip, String afzender, int sprintNummer) {
-        this.berichtID = berichtID;
-        this.inhoud = inhoud;
-        this.tijdstip = tijdstip;
-        this.afzender = afzender;
-        this.sprintNummer = sprintNummer;
-    }
-
-    public int getBerichtID() {
-        return berichtID;
-    }
-
-    public void setBerichtID(int berichtID) {
-        this.berichtID = berichtID;
-    }
-
-    public String getInhoud() {
-        return inhoud;
-    }
-
-    public void setInhoud(String inhoud) {
-        this.inhoud = inhoud;
-    }
-
-    public LocalDateTime getTijdstip() {
-        return tijdstip;
-    }
-
-    public void setTijdstip(LocalDateTime tijdstip) {
-        this.tijdstip = tijdstip;
-    }
-
-    public String getAfzender() {
-        return afzender;
-    }
-
-    public void setAfzender(String afzender) {
-        this.afzender = afzender;
-    }
-
-    public int getSprintNummer() {
-        return sprintNummer;
-    }
-
-    public void setSprintNummer(int sprintNummer) {
-        this.sprintNummer = sprintNummer;
-    }
-}
-
-class Trello {
-    private int trelloID;
-    private String trelloURL;
-
-    public Trello(int trelloID, String trelloURL) {
-        this.trelloID = trelloID;
-        this.trelloURL = trelloURL;
-    }
-
-    public int getTrelloID() {
-        return trelloID;
-    }
-
-    public void setTrelloID(int trelloID) {
-        this.trelloID = trelloID;
-    }
-
-    public String getTrelloURL() {
-        return trelloURL;
-    }
-
-    public void setTrelloURL(String trelloURL) {
-        this.trelloURL = trelloURL;
-    }
-}
-
-class Taak {
-    private int berichtID;
-    private int trelloID;
-    private String beschrijving;
-
-    public Taak(int berichtID, int trelloID, String beschrijving) {
-        this.berichtID = berichtID;
-        this.trelloID = trelloID;
-        this.beschrijving = beschrijving;
-    }
-
-    public int getBerichtID() {
-        return berichtID;
-    }
-
-    public void setBerichtID(int berichtID) {
-        this.berichtID = berichtID;
-    }
-
-    public int getTrelloID() {
-        return trelloID;
-    }
-
-    public void setTrelloID(int trelloID) {
-        this.trelloID = trelloID;
-    }
-
-    public String getBeschrijving() {
-        return beschrijving;
-    }
-
-    public void setBeschrijving(String beschrijving) {
-        this.beschrijving = beschrijving;
     }
 }
