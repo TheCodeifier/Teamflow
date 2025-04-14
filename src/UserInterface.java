@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import database.model.*;
+import util.*;
 
 public class UserInterface {
     private static final Scanner scanner = new Scanner(System.in);
@@ -13,44 +14,24 @@ public class UserInterface {
     private static int currentSprint;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static boolean loggedIn = false;
 
     public static void main(String[] args) {
         boolean running = true;
 
         while (running) {
-            displayLoginScreen();
             if (handleLogin()) {
-                boolean loggedIn = true;
                 while (loggedIn) {
-                    displayMainMenu();
-                    int choice = getUserChoice();
-
-                    switch (choice) {
-                        case 1:
-                            displayMessageScreen();
-                            break;
-                        case 2:
-                            displayChatHistory();
-                            break;
-                        case 3:
-                            displaySearchScreen();
-                            break;
-                        case 0:
-                            loggedIn = false;
-                            currentUser = null;
-                            currentSprint = 0;
-                            break;
-                        default:
-                            System.out.println("Ongeldige keuze. Probeer opnieuw.");
-                    }
+                    handleMainMenu();
                 }
+
             }
         }
 
         scanner.close();
     }
 
-    private static void displayLoginScreen() {
+    private static boolean handleLogin() {
         clearScreen();
         System.out.println("+----------------------------------------------------------------------------------------------------------------");
         System.out.println("| ");
@@ -58,35 +39,26 @@ public class UserInterface {
         System.out.println("| ");
         System.out.println("| Voer je gebruikersnaam in om verder te gaan.");
         System.out.println("| ");
-        System.out.print("| Gebruikersnaam: ");
-        System.out.println("| Sprint #: ");
+
+        String gebruikersnaam = CLI.acceptUserInput("| Gebruikersnaam: ", CLI.SanitizationType.Alphanumeric);
+        String weergavenaam = CLI.acceptUserInput("| Weergavenaam: ", CLI.SanitizationType.AlphanumericWithSpaces);
+        String sprintNummerString = CLI.acceptUserInput("| Sprint #: ", CLI.SanitizationType.PositiveNumber);
+        int sprintNummer = Integer.parseInt(sprintNummerString);
+
+        currentUser = new Gebruiker(gebruikersnaam, weergavenaam);
+        currentSprint = sprintNummer;
+
+        //System.out.println("| Sprint #: ");
         System.out.println("| ");
         System.out.println("| ");
-    }
 
-    private static boolean handleLogin() {
-        System.out.print("\033[4A"); // Cursor 4 regels omhoog
-        System.out.print("\033[18C"); // Cursor naar positie na "Gebruikersnaam: "
-        String username = scanner.nextLine();
-
-        System.out.print("\033[1B"); // Cursor 1 regel omlaag
-        System.out.print("\033[11C"); // Cursor naar positie na "Sprint #: "
-        String sprintInput = scanner.nextLine();
-
-        try {
-            currentSprint = Integer.parseInt(sprintInput);
-        } catch (NumberFormatException e) {
-            System.out.println("Ongeldige sprint nummer. Probeer opnieuw.");
-            waitForEnter();
-            return false;
-        }
-
-        // Dummy gebruiker aanmaken voor demo
-        currentUser = new Gebruiker(username, username);
+        loggedIn = true;
         return true;
     }
 
-    private static void displayMainMenu() {
+
+
+    private static void handleMainMenu() {
         clearScreen();
         System.out.println("+----------------------------------------------------------------------------------------------------------------");
         System.out.println("| ");
@@ -98,18 +70,31 @@ public class UserInterface {
         System.out.println("| 2) Chatgeschiedenis weergeven");
         System.out.println("| 3) Zoeken in berichten");
         System.out.println("|");
-        System.out.println("| Kies een optie: ");
-        System.out.println("| ");
-    }
+        System.out.println("| 0) Uitloggen");
+        System.out.println("|");
 
-    private static int getUserChoice() {
-        System.out.print("\033[2A"); // Cursor 2 regels omhoog
-        System.out.print("\033[16C"); // Cursor naar positie na "Kies een optie: "
-        try {
-            return Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            return -1;
+
+        int choice = Integer.parseInt(CLI.acceptUserInput("| Kies een optie: ", CLI.SanitizationType.PositiveNumber, new String[]{"0", "1", "2", "3"}));
+
+        switch (choice) {
+            case 1:
+                displayMessageScreen();
+                break;
+            case 2:
+                displayChatHistory();
+                break;
+            case 3:
+                displaySearchScreen();
+                break;
+            case 0:
+                loggedIn = false;
+                currentUser = null;
+                currentSprint = -1;
+                break;
+            default:
+                System.out.println("Ongeldige keuze. Probeer opnieuw."); //Zou nooit moeten gebeuren
         }
+
     }
 
     private static void displayMessageScreen() {
@@ -159,7 +144,7 @@ public class UserInterface {
         System.out.println("| ======    Welkom bij TeamFlow, " + currentUser.getWeergavenaam() + "!    =====");
         System.out.println("| ");
 
-        // Dummy berichten voor demo
+        // Dummy berichten voor demo, haal hier de berichten op uit de database en print ze in hetzelfde format als hieronder:
         System.out.println("| [2025-03-24 12:38 | Jairmeli] Hi guys!!!!");
         System.out.println("| [2025-03-24 12:39 | Roderick] Hi Jar, what's on the agenda for today?");
         System.out.println("| [2025-03-24 12:40 | Sjoerd] I don't know, lets just look on Trello?");
