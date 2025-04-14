@@ -1,10 +1,14 @@
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
+
+import database.Database;
 import database.model.*;
 import util.*;
 
@@ -103,38 +107,51 @@ public class UserInterface {
         System.out.println("| ");
         System.out.println("| ======    Welkom bij TeamFlow, " + currentUser.getWeergavenaam() + "!    =====");
         System.out.println("| ");
-        System.out.println("| Typ uw bericht: ");
-        System.out.println("| Wilt u een taak koppelen? [J/N]");
-        System.out.println("| J: Trello URL: ");
-        System.out.println("| N: Druk op enter om te verzenden of op ESC om te annuleren.");
 
-        System.out.print("\033[4A"); // Cursor 4 regels omhoog
-        System.out.print("\033[16C"); // Cursor naar positie na "Typ uw bericht: "
-        String messageContent = scanner.nextLine();
+        String bericht = CLI.acceptUserInput("| Typ uw bericht: ", CLI.SanitizationType.None);
+        String taakKoppelen = CLI.acceptUserInput("| Wilt u een taak koppelen? [J/N] ", CLI.SanitizationType.YesNo);
+        String trelloUrl;
 
-        System.out.print("\033[1B"); // Cursor 1 regel omlaag
-        System.out.print("\033[25C"); // Cursor naar positie na "Wilt u een taak koppelen? [J/N]"
-        String taskChoice = scanner.nextLine().toUpperCase();
-
-        if (taskChoice.equals("J")) {
-            System.out.print("\033[1B"); // Cursor 1 regel omlaag
-            System.out.print("\033[14C"); // Cursor naar positie na "J: Trello URL: "
-            String trelloUrl = scanner.nextLine();
-
-            LocalDateTime now = LocalDateTime.now();
-            System.out.println("Bericht verzonden met taak gekoppeld aan " + trelloUrl);
-
-            // Nieuw bericht aanmaken
-            Bericht bericht = new Bericht(0, messageContent, now, currentUser.getGebruikersnaam(), currentSprint);
-        } else {
-            LocalDateTime now = LocalDateTime.now();
-            System.out.println("Bericht verzonden!");
-
-            // Nieuw bericht aanmaken
-            Bericht bericht = new Bericht(0, messageContent, now, currentUser.getGebruikersnaam(), currentSprint);
+        if (taakKoppelen.equals("J"))
+        {
+            trelloUrl = CLI.acceptUserInput("| Trello URL: ", CLI.SanitizationType.YesNo);
         }
 
-        waitForEnter();
+        System.out.println("| ");
+        System.out.println("| Druk op [Enter] om te verzenden of op [ESC] om te annuleren.");
+
+        long charCode = CLI.readSingleKey();
+
+        if (charCode == 10) //[ENTER]
+        {
+            Bericht berichtObj = new Bericht(0, bericht, LocalDateTime.now(), currentUser.getGebruikersnaam(), currentSprint);
+            try {
+                berichtObj.save();
+                System.out.println("| Bericht verzonden.");
+            } catch (SQLException e) {
+                System.out.println("| Fout bij opslaan van bericht: " + e.getMessage());
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        if (charCode == 27) //[ESC]
+        {
+            System.out.println("| Bericht geannuleerd.");
+            return;
+        }
+    }
+
+    private static void printBerichten(List<Bericht> berichten)
+    {
+        for (Bericht b : berichten) {
+            System.out.printf("| [%s | %s] %s%n", b.getTijdstip().format(DATE_TIME_FORMATTER), b.getAfzender(), b.getInhoud());
+        }
+
+        if (berichten.isEmpty())
+        {
+            System.out.println("| <geen berichten om weer te geven>");
+        }
     }
 
     private static void displayChatHistory() {
@@ -144,14 +161,16 @@ public class UserInterface {
         System.out.println("| ======    Welkom bij TeamFlow, " + currentUser.getWeergavenaam() + "!    =====");
         System.out.println("| ");
 
-        // Dummy berichten voor demo, haal hier de berichten op uit de database en print ze in hetzelfde format als hieronder:
-        System.out.println("| [2025-03-24 12:38 | Jairmeli] Hi guys!!!!");
-        System.out.println("| [2025-03-24 12:39 | Roderick] Hi Jar, what's on the agenda for today?");
-        System.out.println("| [2025-03-24 12:40 | Sjoerd] I don't know, lets just look on Trello?");
-        System.out.println("| ....");
-        System.out.println("| ....");
+        System.out.println("| Chat geschiedenis:");
 
-        waitForEnter();
+        List<Bericht> berichten = Bericht.getAll();
+        printBerichten(berichten);
+
+
+        System.out.println("| ");
+        System.out.println("| Druk op [ENTER] om naar het vorige scherm te gaan.");
+
+        scanner.nextLine();
     }
 
     private static void displaySearchScreen() {
@@ -160,53 +179,31 @@ public class UserInterface {
         System.out.println("| ");
         System.out.println("| ======    Welkom bij TeamFlow, " + currentUser.getWeergavenaam() + "!    =====");
         System.out.println("| ");
-        System.out.println("| Zoeken in berichten: ");
-        System.out.println("|");
-        System.out.println("| Filter op datum:");
-        System.out.println("| Van: ____-__-__");
-        System.out.println("| Tot: ____-__-__ ");
+
+        String zoekterm = CLI.acceptUserInput("| Zoekterm: ", CLI.SanitizationType.None);
+
+//        System.out.println("| Zoeken in berichten: ");
+//        System.out.println("|");
+//        System.out.println("| Filter op datum:");
+//        System.out.println("| Van: ____-__-__");
+//        System.out.println("| Tot: ____-__-__ ");
         System.out.println("| ");
-        System.out.println("| [Enter] Zoeken  [ESC] Terug naar hoofdmenu");
-        System.out.println("|");
+        //System.out.println("| [Enter] Zoeken  [ESC] Terug naar hoofdmenu");
 
-        System.out.print("\033[4A"); // Cursor 4 regels omhoog
-        System.out.print("\033[22C"); // Cursor naar positie na "Zoeken in berichten: "
-        String searchText = scanner.nextLine();
+        List<Bericht> berichten = Bericht.getAll();
+        List<Bericht> gefilterdeBerichten = new ArrayList<>();
 
-        System.out.print("\033[3B"); // Cursor 3 regels omlaag
-        System.out.print("\033[7C"); // Cursor naar positie na "Van: "
-        String fromDateString = scanner.nextLine();
-
-        System.out.print("\033[1B"); // Cursor 1 regel omlaag
-        System.out.print("\033[7C"); // Cursor naar positie na "Tot: "
-        String toDateString = scanner.nextLine();
-
-        // Toon zoekresultaten
-        displaySearchResults(searchText);
-    }
-
-    private static void displaySearchResults(String searchText) {
-        clearScreen();
-        System.out.println("+----------------------------------------------------------------------------------------------------------------");
-        System.out.println("| ");
-        System.out.println("| ======    Welkom bij TeamFlow, " + currentUser.getWeergavenaam() + "!    =====");
-        System.out.println("| ");
-        System.out.println("| Zoekresultaten:");
-        System.out.println("|");
-
-        // Dummy zoekresultaten voor demo
-        if (searchText.toLowerCase().contains("trello")) {
-            System.out.println("| [2025-03-24 12:38 | Jairmeli] Hi guys, we need to update our Trello board!");
-            System.out.println("| [2025-03-25 15:42 | Sjoerd] I've added all tasks to Trello, please check");
-            System.out.println("| [2025-03-26 09:15 | Roderick] Trello board is now up-to-date");
-        } else {
-            System.out.println("| Geen resultaten gevonden voor '" + searchText + "'");
+        for (Bericht b : berichten) {
+            if (b.getInhoud().contains(zoekterm))
+                gefilterdeBerichten.add(b);
         }
 
-        System.out.println("|");
-        System.out.println("| [Enter] Nieuwe zoekopdracht [ESC] Terug naar hoofdmenu");
+        printBerichten(gefilterdeBerichten);
 
-        waitForEnter();
+        System.out.println("| ");
+        System.out.println("| Druk op [ENTER] om naar het vorige scherm te gaan.");
+
+        scanner.nextLine();
     }
 
     private static void clearScreen() {
@@ -214,8 +211,4 @@ public class UserInterface {
         System.out.flush();
     }
 
-    private static void waitForEnter() {
-        System.out.println("\nDruk op Enter om door te gaan...");
-        scanner.nextLine();
-    }
 }

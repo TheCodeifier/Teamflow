@@ -1,5 +1,7 @@
 package util;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -11,9 +13,30 @@ public class CLI {
         None,
         Number,
         PositiveNumber,
+        YesNo,
         Alphabetic,
         Alphanumeric,
         AlphanumericWithSpaces
+    }
+
+    /**
+     * Reads a single key from the console and returns its ASCII code.
+     * @return The ASCII code of the pressed key, or -1 if an error occurs
+     */
+    public static int readSingleKey() {
+        try {
+            Reader reader = System.console().reader();
+            int key = reader.read();
+            return key;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return -1;
+        } catch (NullPointerException e) {
+            // This happens if System.console() returns null (e.g., when running in some IDEs)
+            System.err.println("Console is not available in this environment");
+            e.printStackTrace();
+            return -1;
+        }
     }
 
     public static String acceptUserInput(String query, SanitizationType sanitizationType)
@@ -55,6 +78,10 @@ public class CLI {
                     break;
                 case PositiveNumber:
                     isValid = response.matches("^\\d+$") && Integer.parseInt(response) >= 0;
+                    break;
+                case YesNo:
+                    response = response.toUpperCase(); //Make sure to accept uncapitalized letters too
+                    isValid = response.equals("J") || response.equals("N");
                     break;
                 case Alphabetic:
                     isValid = response.matches("^[a-zA-Z]+$");

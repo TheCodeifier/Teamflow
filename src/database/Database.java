@@ -11,13 +11,15 @@ public class Database {
     // Database connection
     private Connection connection;
 
+    private final boolean log = false;
+
     // Private constructor to prevent instantiation
     private Database() {
         // Initialize connection in constructor
         try {
-            System.out.println("Connecting to: " + DB_URL);
+            if (log) System.out.println("Connecting to: " + DB_URL);
             this.connection = DriverManager.getConnection(DB_URL);
-            System.out.println("Connection to SQLite has been established.");
+            if (log) System.out.println("Connection to SQLite has been established.");
         } catch (SQLException e) {
             System.out.println("Connection error: " + e.getMessage());
             e.printStackTrace();
