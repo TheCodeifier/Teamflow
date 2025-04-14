@@ -16,7 +16,7 @@ import java.util.List;
  * Represents a message in the system with content, timestamp, sender and sprint number.
  * Provides methods for database operations related to message management.
  */
-class Bericht {
+public class Bericht {
     private int berichtID;
     private String inhoud;
     private LocalDateTime tijdstip;

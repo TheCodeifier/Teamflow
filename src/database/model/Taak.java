@@ -13,7 +13,7 @@ import java.util.List;
  * Represents a task in the system with berichtID, trelloID, and description.
  * Provides methods for database operations related to task management.
  */
-class Taak {
+public class Taak {
     private int berichtID;
     private int trelloID;
     private String beschrijving;

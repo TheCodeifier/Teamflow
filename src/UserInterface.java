@@ -1,5 +1,3 @@
-package UserInterface.app;
-
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -7,8 +5,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import database.model.*;
 
-public class TeamFlowApp {
+public class UserInterface {
     private static final Scanner scanner = new Scanner(System.in);
     private static Gebruiker currentUser;
     private static int currentSprint;

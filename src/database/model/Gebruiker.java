@@ -2,6 +2,8 @@ package database.model;
 
 import database.Database;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,21 +12,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a Trello board in the system.
- * Provides methods for database operations related to Trello boards.
+ * Represents a user in the system with username and display name.
+ * Provides methods for database operations related to user management.
  */
-public class Trello {
-    private int trelloID;
-    private String trelloURL;
+public class Gebruiker {
+    private String gebruikersnaam;
+    private String weergavenaam;
 
     /**
-     * Checks if a Trello board with the given ID exists in the database.
+     * Checks if a user with the given username exists in the database.
      *
-     * @param trelloID The ID to check
-     * @return true if the Trello board exists, false otherwise
+     * @param gebruikersnaam The username to check
+     * @return true if the user exists, false otherwise
      */
-    public static boolean exists(int trelloID) {
-        if (trelloID <= 0) {
+    public static boolean exists(String gebruikersnaam) {
+        if (gebruikersnaam == null || gebruikersnaam.isEmpty()) {
             return false;
         }
 
@@ -37,9 +39,9 @@ public class Trello {
             conn = Database.getInstance().getConnection();
 
             // Prepare SQL query with parameter
-            String sql = "SELECT COUNT(*) FROM TRELLO WHERE trelloID = ?";
+            String sql = "SELECT COUNT(*) FROM GEBRUIKER WHERE gebruikersnaam = ?";
             stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, trelloID);
+            stmt.setString(1, gebruikersnaam);
 
             // Execute query
             rs = stmt.executeQuery();
@@ -52,7 +54,7 @@ public class Trello {
             return false;
 
         } catch (SQLException e) {
-            System.out.println("Error checking if Trello board exists: " + e.getMessage());
+            System.out.println("Error checking if user exists: " + e.getMessage());
             e.printStackTrace();
             return false;
         } finally {
@@ -69,20 +71,20 @@ public class Trello {
     }
 
     /**
-     * Retrieves a Trello board from the database by ID.
-     * Uses the exists method to first check if the board exists.
+     * Retrieves a user from the database by username.
+     * Uses the exists method to first check if the user exists.
      *
-     * @param trelloID The ID to look up
-     * @return Trello object if found, null otherwise
+     * @param gebruikersnaam The username to look up
+     * @return Gebruiker object if found, null otherwise
      */
-    public static Trello lookup(int trelloID) {
+    public static Gebruiker lookup(String gebruikersnaam) {
         // Validate input
-        if (trelloID <= 0) {
+        if (gebruikersnaam == null || gebruikersnaam.isEmpty()) {
             return null;
         }
 
-        // First check if the board exists using the exists method
-        if (!exists(trelloID)) {
+        // First check if the user exists using the exists method
+        if (!exists(gebruikersnaam)) {
             return null;
         }
 
@@ -95,25 +97,25 @@ public class Trello {
             conn = Database.getInstance().getConnection();
 
             // Prepare SQL query with parameter
-            String sql = "SELECT trelloID, trelloURL FROM TRELLO WHERE trelloID = ?";
+            String sql = "SELECT gebruikersnaam, weergavenaam FROM GEBRUIKER WHERE gebruikersnaam = ?";
             stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, trelloID);
+            stmt.setString(1, gebruikersnaam);
 
             // Execute query
             rs = stmt.executeQuery();
 
-            // Check if board exists and return it
+            // Check if user exists and return it
             if (rs.next()) {
-                int id = rs.getInt("trelloID");
-                String url = rs.getString("trelloURL");
-                return new Trello(id, url);
+                String username = rs.getString("gebruikersnaam");
+                String displayName = rs.getString("weergavenaam");
+                return new Gebruiker(username, displayName);
             }
 
-            // Return null if board not found (shouldn't happen since we checked with exists)
+            // Return null if user not found (shouldn't happen since we checked with bestaat)
             return null;
 
         } catch (SQLException e) {
-            System.out.println("Error retrieving Trello board: " + e.getMessage());
+            System.out.println("Error retrieving user: " + e.getMessage());
             e.printStackTrace();
             return null;
         } finally {
@@ -130,12 +132,12 @@ public class Trello {
     }
 
     /**
-     * Retrieves all Trello boards from the database.
+     * Retrieves all users from the database.
      *
-     * @return List of all Trello objects in the database, empty list if none found or if an error occurs
+     * @return List of all Gebruiker objects in the database, empty list if none found or if an error occurs
      */
-    public static List<Trello> getAll() {
-        List<Trello> trelloBoards = new ArrayList<>();
+    public static List<Gebruiker> getAll() {
+        List<Gebruiker> gebruikers = new ArrayList<>();
 
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -145,28 +147,28 @@ public class Trello {
             // Get database connection from singleton
             conn = Database.getInstance().getConnection();
 
-            // Prepare SQL query to select all Trello boards
-            String sql = "SELECT trelloID, trelloURL FROM TRELLO";
+            // Prepare SQL query to select all users
+            String sql = "SELECT gebruikersnaam, weergavenaam FROM GEBRUIKER";
             stmt = conn.prepareStatement(sql);
 
             // Execute query
             rs = stmt.executeQuery();
 
-            // Process result set and build list of Trello boards
+            // Process result set and build list of gebruikers
             while (rs.next()) {
-                int id = rs.getInt("trelloID");
-                String url = rs.getString("trelloURL");
+                String username = rs.getString("gebruikersnaam");
+                String displayName = rs.getString("weergavenaam");
 
-                Trello trello = new Trello(id, url);
-                trelloBoards.add(trello);
+                Gebruiker gebruiker = new Gebruiker(username, displayName);
+                gebruikers.add(gebruiker);
             }
 
-            return trelloBoards;
+            return gebruikers;
 
         } catch (SQLException e) {
-            System.out.println("Error retrieving all Trello boards: " + e.getMessage());
+            System.out.println("Error retrieving all users: " + e.getMessage());
             e.printStackTrace();
-            return trelloBoards; // Return empty list in case of error
+            return gebruikers; // Return empty list in case of error
         } finally {
             // Close resources
             try {
@@ -181,23 +183,18 @@ public class Trello {
     }
 
     /**
-     * Saves the current Trello board to the database.
-     * If the board already exists, updates the URL.
-     * If the board doesn't exist, creates a new record.
+     * Saves the current user to the database.
+     * If the user already exists, updates the display name.
+     * If the user doesn't exist, creates a new record.
      * Uses the exists method to check existence.
      *
-     * @throws IllegalArgumentException if trelloID is invalid
+     * @throws IllegalArgumentException if gebruikersnaam is null or empty
      * @throws SQLException if a database error occurs
      */
     public void save() throws IllegalArgumentException, SQLException {
-        // Validate trelloID
-        if (this.getTrelloID() <= 0) {
-            throw new IllegalArgumentException("TrelloID must be greater than 0");
-        }
-
-        // Validate trelloURL
-        if (this.getTrelloURL() == null || this.getTrelloURL().isEmpty()) {
-            throw new IllegalArgumentException("TrelloURL cannot be empty or null");
+        // Validate gebruikersnaam
+        if (this.getGebruikersnaam() == null || this.getGebruikersnaam().isEmpty()) {
+            throw new IllegalArgumentException("Gebruikersnaam cannot be empty or null");
         }
 
         Connection conn = null;
@@ -208,23 +205,23 @@ public class Trello {
             // Get database connection
             conn = Database.getInstance().getConnection();
 
-            // Check if board already exists using the exists method
-            boolean boardExists = exists(this.getTrelloID());
+            // Check if user already exists using the exists method
+            boolean userExists = exists(this.getGebruikersnaam());
 
             // Update or insert based on existence
-            if (boardExists) {
-                // Update existing board
-                String updateSql = "UPDATE TRELLO SET trelloURL = ? WHERE trelloID = ?";
+            if (userExists) {
+                // Update existing user
+                String updateSql = "UPDATE GEBRUIKER SET weergavenaam = ? WHERE gebruikersnaam = ?";
                 updateStmt = conn.prepareStatement(updateSql);
-                updateStmt.setString(1, this.getTrelloURL());
-                updateStmt.setInt(2, this.getTrelloID());
+                updateStmt.setString(1, this.getWeergavenaam());
+                updateStmt.setString(2, this.getGebruikersnaam());
                 updateStmt.executeUpdate();
             } else {
-                // Insert new board
-                String insertSql = "INSERT INTO TRELLO (trelloID, trelloURL) VALUES (?, ?)";
+                // Insert new user
+                String insertSql = "INSERT INTO GEBRUIKER (gebruikersnaam, weergavenaam) VALUES (?, ?)";
                 insertStmt = conn.prepareStatement(insertSql);
-                insertStmt.setInt(1, this.getTrelloID());
-                insertStmt.setString(2, this.getTrelloURL());
+                insertStmt.setString(1, this.getGebruikersnaam());
+                insertStmt.setString(2, this.getWeergavenaam());
                 insertStmt.executeUpdate();
             }
 
@@ -242,28 +239,28 @@ public class Trello {
     }
 
     /**
-     * Creates a new Trello board with the specified ID and URL.
+     * Creates a new Gebruiker with the specified username and display name.
      *
-     * @param trelloID the ID for the Trello board
-     * @param trelloURL the URL for the Trello board
+     * @param gebruikersnaam the username for the user
+     * @param weergavenaam the display name for the user
      */
-    public Trello(int trelloID, String trelloURL) {
-        this.trelloID = trelloID;
-        this.trelloURL = trelloURL;
+    public Gebruiker(String gebruikersnaam, String weergavenaam) {
+        this.gebruikersnaam = gebruikersnaam;
+        this.weergavenaam = weergavenaam;
     }
 
     /**
-     * Deletes this Trello board from the database.
+     * Deletes this user from the database.
      *
-     * @return true if the board was successfully deleted, false if the board didn't exist or an error occurred
+     * @return true if the user was successfully deleted, false if the user didn't exist or an error occurred
      */
     public boolean delete() {
-        if (this.getTrelloID() <= 0) {
+        if (this.getGebruikersnaam() == null || this.getGebruikersnaam().isEmpty()) {
             return false;
         }
 
-        // Only attempt to delete if the board exists
-        if (!exists(this.getTrelloID())) {
+        // Only attempt to delete if the user exists
+        if (!exists(this.getGebruikersnaam())) {
             return false;
         }
 
@@ -275,9 +272,9 @@ public class Trello {
             conn = Database.getInstance().getConnection();
 
             // Prepare delete statement
-            String sql = "DELETE FROM TRELLO WHERE trelloID = ?";
+            String sql = "DELETE FROM GEBRUIKER WHERE gebruikersnaam = ?";
             stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, this.getTrelloID());
+            stmt.setString(1, this.getGebruikersnaam());
 
             // Execute delete operation
             int rowsAffected = stmt.executeUpdate();
@@ -286,7 +283,7 @@ public class Trello {
             return rowsAffected > 0;
 
         } catch (SQLException e) {
-            System.out.println("Error deleting Trello board: " + e.getMessage());
+            System.out.println("Error deleting user: " + e.getMessage());
             e.printStackTrace();
             return false;
         } finally {
@@ -301,19 +298,19 @@ public class Trello {
         }
     }
 
-    public int getTrelloID() {
-        return trelloID;
+    public String getGebruikersnaam() {
+        return gebruikersnaam;
     }
 
-    public void setTrelloID(int trelloID) {
-        this.trelloID = trelloID;
+    public void setGebruikersnaam(String gebruikersnaam) {
+        this.gebruikersnaam = gebruikersnaam;
     }
 
-    public String getTrelloURL() {
-        return trelloURL;
+    public String getWeergavenaam() {
+        return weergavenaam;
     }
 
-    public void setTrelloURL(String trelloURL) {
-        this.trelloURL = trelloURL;
+    public void setWeergavenaam(String weergavenaam) {
+        this.weergavenaam = weergavenaam;
     }
 }

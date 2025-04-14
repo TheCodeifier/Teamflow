@@ -14,7 +14,7 @@ import java.util.List;
  * Represents a sprint in the system with sprint number, begin date, and end date.
  * Provides methods for database operations related to sprint management.
  */
-class Sprint {
+public class Sprint {
     private int sprintNummer;
     private LocalDate beginDatum;
     private LocalDate eindDatum;
