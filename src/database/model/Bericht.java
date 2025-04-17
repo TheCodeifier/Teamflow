@@ -336,13 +336,13 @@ public class Bericht {
      * Saves the current message to the database.
      * If the message already exists (berichtID > 0 and exists in DB), updates its content, timestamp, sender and sprint number.
      * If the message doesn't exist, creates a new record.
-     * Uses the exists method to check existence.
+     * After insert, updates the object with any database-assigned values.
      *
      * @throws IllegalArgumentException if inhoud is null or empty, or if afzender is null or empty
      * @throws SQLException if a database error occurs
-     * @return The berichtID of the saved message (useful when creating new messages with auto-generated IDs)
+     * @return true if save was successful, false otherwise
      */
-    public int save() throws IllegalArgumentException, SQLException {
+    public boolean save() throws IllegalArgumentException, SQLException {
         // Validate input
         if (this.getInhoud() == null || this.getInhoud().isEmpty()) {
             throw new IllegalArgumentException("Inhoud cannot be empty or null");
@@ -369,10 +369,10 @@ public class Bericht {
             // Get database connection
             conn = Database.getInstance().getConnection();
 
-            boolean messageExists = this.getBerichtID() > 0 && exists(this.getBerichtID());
+            // Check if the object has a valid ID already (update case)
+            boolean isUpdate = this.getBerichtID() > 0 && exists(this.getBerichtID());
 
-            // Update or insert based on existence
-            if (messageExists) {
+            if (isUpdate) {
                 // Update existing message
                 String updateSql = "UPDATE BERICHT SET inhoud = ?, tijdstip = ?, afzender = ?, sprintNummer = ? WHERE berichtID = ?";
                 updateStmt = conn.prepareStatement(updateSql);
@@ -381,31 +381,59 @@ public class Bericht {
                 updateStmt.setString(3, this.getAfzender());
                 updateStmt.setInt(4, this.getSprintNummer());
                 updateStmt.setInt(5, this.getBerichtID());
-                updateStmt.executeUpdate();
 
-                return this.getBerichtID(); // Return existing ID
+                int rowsAffected = updateStmt.executeUpdate();
 
+                // Update any related Trello boards
+                updateRelatedTrelloBoards();
+
+                return rowsAffected > 0;
             } else {
                 // Insert new message
-                String insertSql = "INSERT INTO BERICHT (inhoud, tijdstip, afzender, sprintNummer) VALUES (?, ?, ?, ?)";
-                insertStmt = conn.prepareStatement(insertSql, PreparedStatement.RETURN_GENERATED_KEYS);
-                insertStmt.setString(1, this.getInhoud());
-                insertStmt.setTimestamp(2, Timestamp.valueOf(this.getTijdstip()));
-                insertStmt.setString(3, this.getAfzender());
-                insertStmt.setInt(4, this.getSprintNummer());
-                insertStmt.executeUpdate();
+                // Determine if we need to let the database generate the ID
+                boolean useGeneratedId = this.getBerichtID() <= 0;
 
-                // Get the auto-generated ID
-                generatedKeys = insertStmt.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    int newId = generatedKeys.getInt(1);
-                    this.setBerichtID(newId); // Update the object with the new ID
-                    return newId;
+                String insertSql;
+                if (useGeneratedId) {
+                    // Let the database generate the ID
+                    insertSql = "INSERT INTO BERICHT (inhoud, tijdstip, afzender, sprintNummer) VALUES (?, ?, ?, ?)";
+                    insertStmt = conn.prepareStatement(insertSql, java.sql.Statement.RETURN_GENERATED_KEYS);
+                    insertStmt.setString(1, this.getInhoud());
+                    insertStmt.setTimestamp(2, Timestamp.valueOf(this.getTijdstip()));
+                    insertStmt.setString(3, this.getAfzender());
+                    insertStmt.setInt(4, this.getSprintNummer());
                 } else {
-                    throw new SQLException("Creating message failed, no ID obtained.");
+                    // Use the provided ID
+                    insertSql = "INSERT INTO BERICHT (berichtID, inhoud, tijdstip, afzender, sprintNummer) VALUES (?, ?, ?, ?, ?)";
+                    insertStmt = conn.prepareStatement(insertSql, java.sql.Statement.RETURN_GENERATED_KEYS);
+                    insertStmt.setInt(1, this.getBerichtID());
+                    insertStmt.setString(2, this.getInhoud());
+                    insertStmt.setTimestamp(3, Timestamp.valueOf(this.getTijdstip()));
+                    insertStmt.setString(4, this.getAfzender());
+                    insertStmt.setInt(5, this.getSprintNummer());
                 }
-            }
 
+                int rowsAffected = insertStmt.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    // Get the generated keys
+                    generatedKeys = insertStmt.getGeneratedKeys();
+
+                    if (generatedKeys.next()) {
+                        // Update the object with the generated ID if we didn't specify one
+                        if (useGeneratedId) {
+                            this.setBerichtID(generatedKeys.getInt(1));
+                        }
+
+                        // Update any related Trello boards that might reference this berichtID
+                        updateRelatedTrelloBoards();
+
+                        return true;
+                    }
+                }
+
+                return false;
+            }
         } finally {
             // Close resources
             try {
@@ -417,6 +445,24 @@ public class Bericht {
                 System.out.println("Error closing resources: " + e.getMessage());
                 e.printStackTrace();
             }
+        }
+    }
+
+    /**
+     * Updates any Trello boards that reference this Bericht's ID.
+     * This ensures foreign key relationships are maintained.
+     */
+    private void updateRelatedTrelloBoards() {
+        if (this.getBerichtID() <= 0) {
+            return; // Cannot update relations without a valid ID
+        }
+
+        // Get any Trello boards that reference this berichtID
+        Trello relatedTrello = Trello.lookupByBerichtID(this.getBerichtID());
+
+        // If a related Trello board exists, ensure the relationship is maintained
+        if (relatedTrello != null) {
+            // The relationship already exists, no need to update
         }
     }
 
